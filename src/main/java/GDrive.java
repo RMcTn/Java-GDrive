@@ -10,6 +10,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -70,8 +71,7 @@ public class GDrive {
     public static Credential authorize() throws IOException {
         // Load client secrets.
         InputStream in =
-                GDrive.class.getResourceAsStream("/client_secret.json"
-                );
+                GDrive.class.getResourceAsStream("/client_secret.json");
         GoogleClientSecrets clientSecrets =
                 GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
@@ -118,19 +118,10 @@ public class GDrive {
 
         try {
             service = createDriveService();
-            FileList request = service.files().list().setFields("files(id, name, mimeType, md5Checksum)").execute();
+
+            FileList request = service.files().list().setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
             List<File> files = request.getFiles();
-
-            if (files.isEmpty()) {
-                System.out.println("No files.");
-                return;
-            }
-
-            for (File file : files) {
-                System.out.println(file.getName());
-                System.out.printf("%s (%s) %s | Is folder: %s | Is binary: %s \n", file.getName(), file.getId(), file.getMimeType(), Download.isDirectory(file), Download.isBinaryFile(file));
-                Download.downloadFile(file);
-            }
+            Download.downloadFiles(files);
 
         } catch (IOException e) {
             e.printStackTrace();
