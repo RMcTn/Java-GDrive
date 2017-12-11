@@ -16,4 +16,4 @@ include 'api'
 include 'services:webservice'
 */
 
-rootProject.name = 'linux_gdrive'
+rootProject.name = 'Java-GDrive'
