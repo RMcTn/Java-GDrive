@@ -32,8 +32,14 @@ public class Download {
                 return;
             }
 
+            java.io.File fileToSave = new java.io.File(GDrive.getDrive_dir() + file.getName());
+            if (fileToSave.exists()) {
+                System.out.println("File " + file.getName() + " exists, skipping.");
+                return;
+            }
+
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            OutputStream fileOutputStream = new FileOutputStream(GDrive.getDrive_dir() + file.getName());
+            OutputStream fileOutputStream = new FileOutputStream(fileToSave);
             Drive service = GDrive.getDriveService();
             service.files().get(file.getId())
                     .executeMediaAndDownloadTo(outputStream);
