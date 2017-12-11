@@ -1,15 +1,11 @@
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import java.io.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Download {
-
-    private static List<File> filesToDownload;
 
     public static boolean isDirectory(File file) {
         return file.getMimeType().equalsIgnoreCase("application/vnd.google-apps.folder");
@@ -19,17 +15,8 @@ public class Download {
         return file.getMd5Checksum() != null;
     }
 
-    public static File getParent(File file) {
-        final String parentId = file.getParents().get(0);
-        List<File> parent = filesToDownload.stream()
-                .filter(item -> item.getId().equals(parentId))
-                .collect(Collectors.toList());
-        return parent.get(0);
-    }
-
     public static void downloadFiles(List<File> files) {
-        filesToDownload = files;
-        if (filesToDownload.isEmpty()) {
+        if (files.isEmpty() || files == null) {
             System.out.println("No files.");
             return;
         }
@@ -44,14 +31,6 @@ public class Download {
                 System.out.println(file.getName());
                 System.out.printf("%s (%s) %s | Is folder: %s | Is binary: %s | checksum: %s |\n", file.getName(), file.getId(), file.getMimeType(), Download.isDirectory(file), Download.isBinaryFile(file), file.getMd5Checksum());
                 System.out.println(file.getName() + " parent: " + file.getParents());
-
-                if (isDirectory(file)) {
-                    downloadRecursive(file);
-                } else if (isBinaryFile(file)) {
-//                    downloadFile(file);
-                } else {
-                    //Google docs file
-                }
 
             }*/
         } catch (IOException e) {
@@ -81,24 +60,24 @@ public class Download {
     }
 
     private static void downloadFile(File file, String path) throws IOException {
-            System.out.println("File: " + file.getName());
+        System.out.println("File: " + file.getName());
 
-            java.io.File parentDir = new java.io.File(path);
-            if (!parentDir.exists() && !parentDir.mkdirs())
-                throw new IOException("Failed to create parent directory");
+        java.io.File parentDir = new java.io.File(path);
+        if (!parentDir.exists() && !parentDir.mkdirs())
+            throw new IOException("Failed to create parent directory");
 
-            java.io.File fileToSave = new java.io.File(path + file.getName());
-            if (fileToSave.exists()) {
-                System.out.println("File " + file.getName() + " exists, skipping.");
-                return;
-            }
+        java.io.File fileToSave = new java.io.File(path + file.getName());
+        if (fileToSave.exists()) {
+            System.out.println("File " + file.getName() + " exists, skipping.");
+            return;
+        }
 
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            OutputStream fileOutputStream = new FileOutputStream(fileToSave);
-            Drive service = GDrive.getDriveService();
-            service.files().get(file.getId())
-                    .executeMediaAndDownloadTo(outputStream);
-            outputStream.writeTo(fileOutputStream);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        OutputStream fileOutputStream = new FileOutputStream(fileToSave);
+        Drive service = GDrive.getDriveService();
+        service.files().get(file.getId())
+                .executeMediaAndDownloadTo(outputStream);
+        outputStream.writeTo(fileOutputStream);
 
     }
 
@@ -111,5 +90,15 @@ public class Download {
 
     private static void downloadDirectory(File file, String path) {
         System.out.println("Directory: " + file.getName());
+        path += file.getName() + '/';
+        java.io.File folderPath = new java.io.File(path);
+        if (folderPath.exists()) {
+            System.out.println("Directory " + file.getName() + " exists");
+        } else {
+            if (!folderPath.mkdir()) {
+                System.out.println("Couldn't create directory " + file.getName());
+            }
+        }
+        downloadRecursive(file, path);
     }
 }
