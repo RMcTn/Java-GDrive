@@ -4,3 +4,5 @@
 #Intellij
 .idea
 .iml
+
+client_secret.json
