@@ -62,17 +62,17 @@ public class Download {
     private static void downloadRecursive(File file, String path) {
         //Path should be gdrive directory + parents directory + filename
         Drive service = GDrive.getDriveService();
-        String query = file.getId() + " in parents";
+        String query = String.format("'%s' in parents", file.getId());
         try {
-            FileList result = service.files().list().setQ(query).setFields("files(id, name, parents)").execute();
+            FileList result = service.files().list().setQ(query).setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
             List<File> children = result.getFiles();
             for (File child : children) {
                 if (isDirectory(child)) {
-//                    downloadDirectory(child);
+                    downloadDirectory(child, path);
                 } else if (isBinaryFile(child)) {
-//                    downloadFile(child);
+                    downloadFile(child, path);
                 } else {
-//                    exportFile(child);
+                    exportFile(child, path);
                 }
             }
         } catch (IOException e) {
@@ -81,11 +81,13 @@ public class Download {
     }
 
     private static void downloadFile(File file, String path) throws IOException {
-            java.io.File parentDir = new java.io.File(GDrive.getDrive_dir());
+            System.out.println("File: " + file.getName());
+
+            java.io.File parentDir = new java.io.File(path);
             if (!parentDir.exists() && !parentDir.mkdirs())
                 throw new IOException("Failed to create parent directory");
 
-            java.io.File fileToSave = new java.io.File(GDrive.getDrive_dir() + file.getName());
+            java.io.File fileToSave = new java.io.File(path + file.getName());
             if (fileToSave.exists()) {
                 System.out.println("File " + file.getName() + " exists, skipping.");
                 return;
@@ -108,6 +110,6 @@ public class Download {
     }
 
     private static void downloadDirectory(File file, String path) {
-
+        System.out.println("Directory: " + file.getName());
     }
 }
