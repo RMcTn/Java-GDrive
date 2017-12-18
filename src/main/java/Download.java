@@ -3,9 +3,21 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Download {
+
+    private static Map<String, String> exports = createExportMap();
+
+    private static Map<String, String> createExportMap() {
+        Map<String, String> exportMap = new HashMap<>();
+        exportMap.put("application/vnd.google-apps.document", "application/pdf");
+        exportMap.put("application/vnd.google-apps.spreadsheet", "text/csv");
+        exportMap.put("application/vnd.google-apps.presentation", "application/pdf");
+        return exportMap;
+    }
 
     public static boolean isDirectory(File file) {
         return file.getMimeType().equalsIgnoreCase("application/vnd.google-apps.folder");
@@ -59,6 +71,9 @@ public class Download {
         }
     }
 
+    /*
+    Download a binary file
+     */
     private static void downloadFile(File file, String path) throws IOException {
         System.out.println("File: " + file.getName());
 
@@ -67,25 +82,45 @@ public class Download {
             throw new IOException("Failed to create parent directory");
 
         java.io.File fileToSave = new java.io.File(path + file.getName());
+        //TODO: Add option to overwrite file
         if (fileToSave.exists()) {
             System.out.println("File " + file.getName() + " exists, skipping.");
             return;
         }
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         OutputStream fileOutputStream = new FileOutputStream(fileToSave);
         Drive service = GDrive.getDriveService();
         service.files().get(file.getId())
-                .executeMediaAndDownloadTo(outputStream);
-        outputStream.writeTo(fileOutputStream);
-
+                .executeMediaAndDownloadTo(fileOutputStream);
+        fileOutputStream.close();
     }
 
     /*
     Files like Google Documents need to be exported.
      */
-    private static void exportFile(File file, String path) {
+    private static void exportFile(File file, String path) throws IOException {
+        System.out.println("Google file: " + file.getName());
+        Drive service = GDrive.getDriveService();
+        String mimeType = exports.get(file.getMimeType());
+        if (mimeType != null) {
 
+            //File extensions are taken as the text after the last '/' from the equivalent
+            //mimetype. Seems like a bad solution, should change.
+            String extension = "." + mimeType.substring(mimeType.lastIndexOf("/") + 1);
+            java.io.File fileToSave = new java.io.File(path + file.getName() + extension);
+
+            if (fileToSave.exists()) {
+                System.out.println("File " + file.getName() + " exists, skipping.");
+                return;
+            }
+
+            OutputStream fileOutputStream = new FileOutputStream(fileToSave);
+            service.files().export(file.getId(), exports.get(file.getMimeType()))
+                    .executeMediaAndDownloadTo(fileOutputStream);
+            fileOutputStream.close();
+        } else {
+            System.out.println("Could not download " + file.getName() + ", file type " + file.getMimeType() + " not supported");
+        }
     }
 
     private static void downloadDirectory(File file, String path) {
