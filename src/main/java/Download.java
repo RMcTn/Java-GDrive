@@ -53,7 +53,7 @@ public class Download {
     private static void downloadRecursive(File file, String path) {
         //Path should be gdrive directory + parents directory + filename
         Drive service = GDrive.getDriveService();
-        String query = String.format("'%s' in parents", file.getId());
+        String query = String.format("'%s' in parents and (trashed = false)", file.getId());
         try {
             FileList result = service.files().list().setQ(query).setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
             List<File> children = result.getFiles();
