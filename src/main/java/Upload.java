@@ -17,52 +17,60 @@ This is NOT to sync, duplicates will be created when used if files are already o
 
 public class Upload {
 
+
     /*
-    Sets the name, mimetype and parents of the file to upload, and uploads this file along
-    with it's FileContent
+    Creates a new Google file and sets its name, mimetype and parents from a local file, and a list of parents
      */
-    //TODO: Move setting file name etc to another function
+    private static File createFileToUpload(java.io.File localFile, List<String> parents) throws IOException {
+        File newFile = new File();
+        newFile.setName(localFile.getName());
+        if (localFile.isDirectory()) {
+            newFile.setMimeType("application/vnd.google-apps.folder");
+        } else {
+            String mimeType = probeContentType(localFile.toPath());
+            newFile.setMimeType(mimeType);
+        }
+
+        newFile.setParents(parents);
+
+        return newFile;
+    }
+
+    /*
+    Uploads a local file to the user's Google Drive in the format of a Google file
+     */
     private static void uploadFile(java.io.File file, File parent) throws IOException {
-        File fileToUpload = new File();
-        fileToUpload.setName(file.getName());
-
-        String mimeType = probeContentType(file.toPath());
-        fileToUpload.setMimeType(mimeType);
-
         List<String> parents = new ArrayList<>();
         parents.add(parent.getId());
-        fileToUpload.setParents(parents);
 
-        FileContent mediaContent = new FileContent(mimeType, file);
+        File fileToUpload = createFileToUpload(file, parents);
+
+        FileContent mediaContent = new FileContent(fileToUpload.getMimeType(), file);
         Drive service = GDrive.getDriveService();
         System.out.println("Uploading " + file.getName());
+
         service.files().create(fileToUpload, mediaContent).setFields("id, name").execute();
-        System.out.println("Successfully uploaded " + file.getName());
+        //TODO: print more indepth message for successful upload (file path including parents?)
+        System.out.println("Successfully uploaded " + fileToUpload.getName());
         System.out.println();
     }
 
     /*
-    Sets the name, mimetype and parents of the directory to upload, and uploads the directory
+    Uploads a local directory to the user's Google Drive in the format of a Google folder
      */
-    //TODO: Move setting file name etc to another function
     private static void uploadDirectory(java.io.File file, File parent) throws IOException {
-        File fileToUpload = new File();
-        fileToUpload.setName(file.getName());
-
-        fileToUpload.setMimeType("application/vnd.google-apps.folder");
-
         List<String> parents = new ArrayList<>();
         parents.add(parent.getId());
-        fileToUpload.setParents(parents);
 
-        System.out.println("Uploading " + file.getName());
+        File fileToUpload = createFileToUpload(file, parents);
+
+
         Drive service = GDrive.getDriveService();
+        System.out.println("Uploading " + file.getName());
 
         File uploadedFile = service.files().create(fileToUpload).setFields("id, name").execute();
         System.out.println("Successfully uploaded " + uploadedFile.getName());
         System.out.println();
-
-        System.out.println(uploadedFile.getName() + " id is now: " + uploadedFile.getId());
 
         java.io.File[] files = file.listFiles();
         if (files.length != 0 || files != null)
@@ -96,7 +104,6 @@ public class Upload {
         }
 
     }
-
 
 }
 
