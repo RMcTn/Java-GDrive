@@ -119,9 +119,13 @@ public class GDrive {
         try {
             service = createDriveService();
 
-            FileList request = service.files().list().setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
-            List<File> files = request.getFiles();
-            Download.downloadFiles(files);
+            //Upload all files test code
+            Upload.uploadFiles();
+
+            //Download all files test code
+//            FileList request = service.files().list().setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
+//            List<File> files = request.getFiles();
+//            Download.downloadFiles(files);
 
         } catch (IOException e) {
             e.printStackTrace();
