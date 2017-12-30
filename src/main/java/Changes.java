@@ -1,9 +1,12 @@
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.Change;
 import com.google.api.services.drive.model.ChangeList;
+import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.StartPageToken;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Changes {
 
@@ -32,9 +35,16 @@ public class Changes {
             return tokenReader.readLine();
     }
 
+    private static ChangeList getChangeList(String pageToken) throws IOException {
+        Drive service = GDrive.getDriveService();
+        ChangeList changeList = service.changes().list(pageToken).setFields("nextPageToken, newStartPageToken, " +
+                "changes(file(id, name, mimeType, md5Checksum, parents))").execute();
+        return changeList;
+    }
 
     public static void main(String[] args) throws IOException {
         Drive service = GDrive.getDriveService();
+
         StartPageToken pageTokenResponse = service.changes().getStartPageToken().execute();
         String savedPageToken = pageTokenResponse.getStartPageToken();
         String pageToken;
@@ -47,11 +57,13 @@ public class Changes {
         }
         updateSavedPageToken(savedPageToken);
 
+        List<File> changedFiles = new ArrayList<>();
         while (pageToken != null) {
-            ChangeList changeList = service.changes().list(pageToken).execute();
+            ChangeList changeList = getChangeList(pageToken);
             for (Change change : changeList.getChanges()) {
                 //Deal with change stuff
                 System.out.println("Change found for " + change.getFile().getName());
+                changedFiles.add(change.getFile());
             }
             if (changeList.getNewStartPageToken() != null) {
                 //Reached the last page, save page token
@@ -59,8 +71,9 @@ public class Changes {
             }
             pageToken = changeList.getNextPageToken();
         }
-
         updateSavedPageToken(savedPageToken);
+
+        Download.downloadFiles(changedFiles);
     }
 
 }
