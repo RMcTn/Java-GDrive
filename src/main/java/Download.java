@@ -27,11 +27,22 @@ public class Download {
         return file.getMd5Checksum() != null;
     }
 
+    /*
+    Downloads files in the given list of Files
+     */
     public static void downloadFiles(List<File> files) {
-        if (files.isEmpty() || files == null) {
-            System.out.println("No files.");
-            return;
-        }
+        //TODO: Make sure each file has its parent directory (recursive) locally
+            for (File file : files) {
+                System.out.println(file.getName());
+                System.out.printf("%s (%s) %s | Is folder: %s | Is binary: %s | checksum: %s |\n", file.getName(), file.getId(), file.getMimeType(), Download.isDirectory(file), Download.isBinaryFile(file), file.getMd5Checksum());
+                System.out.println(file.getName() + " parent: " + file.getParents());
+            }
+    }
+
+    /*
+    Downloads all files in the user's drive
+     */
+    public static void downloadAllFiles() {
         Drive service = GDrive.getDriveService();
         File rootFile;
         try {
@@ -39,12 +50,6 @@ public class Download {
 
             downloadRecursive(rootFile, GDrive.getDrive_dir());
 
-/*            for (File file : filesToDownload) {
-                System.out.println(file.getName());
-                System.out.printf("%s (%s) %s | Is folder: %s | Is binary: %s | checksum: %s |\n", file.getName(), file.getId(), file.getMimeType(), Download.isDirectory(file), Download.isBinaryFile(file), file.getMd5Checksum());
-                System.out.println(file.getName() + " parent: " + file.getParents());
-
-            }*/
         } catch (IOException e) {
             e.printStackTrace();
         }
