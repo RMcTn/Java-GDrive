@@ -118,14 +118,18 @@ public class GDrive {
 
         try {
             service = createDriveService();
-
+            File rootFile = service.files().get("root").execute();
+            Download.setRootFile(rootFile);
             //Upload all files test code
 //            Upload.uploadFiles();
 
             //Download all files test code
-//            FileList request = service.files().list().setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
-//            List<File> files = request.getFiles();
-//            Download.downloadFiles(files);
+            FileList request = service.files().list().setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
+            List<File> files = request.getFiles();
+            //Download.downloadAllFiles();
+
+            //Download list of files test code
+            Download.downloadFiles(files.subList(0, 3));
 
             //Changes test code
             Changes.main(null);
