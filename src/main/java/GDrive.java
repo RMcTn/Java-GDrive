@@ -26,7 +26,7 @@ public class GDrive {
             "GDrive";
 
     /** Directory to store files downloaded. */
-    private static String drive_dir = System.getProperty("user.home") + "/gdrive/";
+    private static String drive_dir = System.getProperty("user.home") + "\\gdrive/";
 
     private static Drive service;
 
@@ -129,7 +129,7 @@ public class GDrive {
             //Download.downloadAllFiles();
 
             //Download list of files test code
-            Download.downloadFiles(files.subList(0, 3));
+            //Download.downloadFiles(files.subList(0, 3));
 
             //Changes test code
             Changes.main(null);

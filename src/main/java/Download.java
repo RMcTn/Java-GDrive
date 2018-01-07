@@ -45,7 +45,8 @@ public class Download {
         File parent;
         try {
             List<String> parents = file.getParents();
-            parent = service.files().get(parents.get(0)).setFields("id, name, parents").execute();
+            //Parent is (should be) a directory so checksum is not needed (we know the type)
+            parent = service.files().get(parents.get(0)).setFields("id, name, parents, mimeType").execute();
             if (!parent.getId().equals(rootFile.getId()))
                 return parent;
 
@@ -79,17 +80,64 @@ public class Download {
     Downloads files in the given list of Files
      */
     public static void downloadFiles(List<File> files) {
-        //TODO: Make sure each file has its parent directory (recursive) locally
-
         for (File file : files) {
             System.out.println(file.getName());
             System.out.printf("%s (%s) %s | Is folder: %s | Is binary: %s | checksum: %s |\n", file.getName(), file.getId(), file.getMimeType(), Download.isDirectory(file), Download.isBinaryFile(file), file.getMd5Checksum());
             System.out.println(file.getName() + " parent: " + file.getParents());
+            String path = "/";
 
+            if (!isDirectory(file)) {
+                //If the file is not a directory, we don't want to add it to the path used to
+                //create directories
+                File parent = getParent(file);
+                if (!parent.getId().equals(rootFile.getId()))
+                    path = getPathRecursive(parent, parent.getName());
 
-            String path = getPathRecursive(file, file.getName());
+            } else {
+                path = getPathRecursive(file, file.getName());
+            }
+
             System.out.println(path);
+            createLocalDirectories(path);
 
+            //If the path is just the rootFile, change it to the user's local drive directory
+            if (path.equals("/"))
+                path = GDrive.getDrive_dir();
+            path += "/";
+            try {
+                if (isBinaryFile(file))
+                    downloadFile(file, path);
+                else if (isDirectory(file))
+                    continue;
+                else //Must be a google doc file
+                    exportFile(file, path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    private static void createLocalDirectories(String path) {
+        path = path.substring(path.indexOf("/"));
+        String[] directoriesToCreate = path.split("/");
+        path = GDrive.getDrive_dir();
+        for (String directory : directoriesToCreate) {
+            if (directory.equals(""))
+                continue;
+            path += directory + "/";
+            createLocalDirectory(path);
+        }
+    }
+
+    private static void createLocalDirectory(String path) {
+        java.io.File folderPath = new java.io.File(path);
+        if (folderPath.exists()) {
+            System.out.println("Directory " + path + " exists");
+        } else {
+            if (!folderPath.mkdir()) {
+                System.out.println("Couldn't create directory " + path);
+            }
         }
     }
 
@@ -185,14 +233,7 @@ public class Download {
     private static void downloadDirectory(File file, String path) {
         System.out.println("Directory: " + file.getName());
         path += file.getName() + '/';
-        java.io.File folderPath = new java.io.File(path);
-        if (folderPath.exists()) {
-            System.out.println("Directory " + file.getName() + " exists");
-        } else {
-            if (!folderPath.mkdir()) {
-                System.out.println("Couldn't create directory " + file.getName());
-            }
-        }
+        createLocalDirectory(path);
         downloadRecursive(file, path);
     }
 }
