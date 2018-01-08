@@ -74,7 +74,12 @@ public class GDrive {
                 GDrive.class.getResourceAsStream("/client_secret.json");
         GoogleClientSecrets clientSecrets =
                 GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
-
+        if (clientSecrets.getDetails().getClientId().startsWith("Enter")
+                || clientSecrets.getDetails().getClientSecret().startsWith("Enter ")) {
+            System.out.println("Enter Client ID and Secret from https://code.google.com/apis/console/ "
+                    + "into Java-GDrive/src/main/resources/client_secrets.json");
+            System.exit(1);
+        }
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow =
                 new GoogleAuthorizationCodeFlow.Builder(
