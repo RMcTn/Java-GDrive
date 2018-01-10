@@ -30,6 +30,9 @@ public class GDrive {
 
     private static Drive service;
 
+    /** Root file of the drive */
+    private static File rootFile;
+
     /** Directory to store user credentials for this application. */
     private static final java.io.File DATA_STORE_DIR = new java.io.File(
             System.getProperty("user.home"), ".credentials/gdrive");
@@ -69,6 +72,7 @@ public class GDrive {
      * @throws IOException
      */
     public static Credential authorize() throws IOException {
+        //TODO: Try get a better system for authorizing
         // Load client secrets.
         InputStream in =
                 GDrive.class.getResourceAsStream("/client_secret.json");
@@ -119,12 +123,15 @@ public class GDrive {
         return service;
     }
 
+    public static File getRootFile() {
+        return rootFile;
+    }
+
     public static void main(String[] args) {
 
         try {
             service = createDriveService();
-            File rootFile = service.files().get("root").execute();
-            Download.setRootFile(rootFile);
+            rootFile = service.files().get("root").execute();
             //Upload all files test code
 //            Upload.uploadFiles();
 

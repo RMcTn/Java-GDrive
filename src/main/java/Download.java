@@ -9,8 +9,6 @@ import java.util.Map;
 
 public class Download {
 
-    private static File rootFile;
-
     private static Map<String, String> exports = createExportMap();
 
     private static Map<String, String> createExportMap() {
@@ -21,14 +19,6 @@ public class Download {
         return exportMap;
     }
 
-    public static void setRootFile(File file) {
-        rootFile = file;
-    }
-
-    public static File getRootFile() {
-        return rootFile;
-    }
-
     public static boolean isDirectory(File file) {
         return file.getMimeType().equalsIgnoreCase("application/vnd.google-apps.folder");
     }
@@ -36,12 +26,14 @@ public class Download {
     public static boolean isBinaryFile(File file) {
         return file.getMd5Checksum() != null;
     }
+
     /*
     Gets the parent of the given file.
     Returns the drive rootFile if a parent is not available
      */
-    private static File getParent(File file) {
+    public static File getParent(File file) {
         Drive service = GDrive.getDriveService();
+        File rootFile = GDrive.getRootFile();
         File parent;
         try {
             List<String> parents = file.getParents();
@@ -66,7 +58,7 @@ public class Download {
     private static String getPathRecursive(File file, String path) {
         File parent = getParent(file);
         StringBuilder stringBuilder = new StringBuilder(path);
-        if (!parent.getId().equals(rootFile.getId())) {
+        if (!parent.getId().equals(GDrive.getRootFile().getId())) {
             stringBuilder.insert(0, parent.getName() + "/");
             stringBuilder.replace(0, stringBuilder.length(), getPathRecursive(parent, stringBuilder.toString()));
         } else {
@@ -90,7 +82,7 @@ public class Download {
                 //If the file is not a directory, we don't want to add it to the path used to
                 //create directories
                 File parent = getParent(file);
-                if (!parent.getId().equals(rootFile.getId()))
+                if (!parent.getId().equals(GDrive.getRootFile().getId()))
                     path = getPathRecursive(parent, parent.getName());
 
             } else {
