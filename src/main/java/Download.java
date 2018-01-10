@@ -28,37 +28,13 @@ public class Download {
     }
 
     /*
-    Gets the parent of the given file.
-    Returns the drive rootFile if a parent is not available
-     */
-    public static File getParent(File file) {
-        Drive service = GDrive.getDriveService();
-        File rootFile = GDrive.getRootFile();
-        File parent;
-        try {
-            List<String> parents = file.getParents();
-            //Parent is (should be) a directory so checksum is not needed (we know the type)
-            parent = service.files().get(parents.get(0)).setFields("id, name, parents, mimeType").execute();
-            if (!parent.getId().equals(rootFile.getId()))
-                return parent;
-
-        } catch (IOException e) {
-            System.out.printf("Could not get parent file for %s (%s)\n", file.getId(), file.getName());
-        }
-
-        //If there was no parent, the parent must be the rootFile of the user's Drive
-        return rootFile;
-
-    }
-
-    /*
     From a given file, will get the parent of that file, add the parent file
     to the front of the path, and will recurse until rootFile is hit
      */
     private static String getPathRecursive(File file, String path) {
-        File parent = getParent(file);
+        File parent = Util.getParent(file);
         StringBuilder stringBuilder = new StringBuilder(path);
-        if (!parent.getId().equals(GDrive.getRootFile().getId())) {
+        if (!Util.isFileRootFile(parent)) {
             stringBuilder.insert(0, parent.getName() + "/");
             stringBuilder.replace(0, stringBuilder.length(), getPathRecursive(parent, stringBuilder.toString()));
         } else {
@@ -81,8 +57,8 @@ public class Download {
             if (!isDirectory(file)) {
                 //If the file is not a directory, we don't want to add it to the path used to
                 //create directories
-                File parent = getParent(file);
-                if (!parent.getId().equals(GDrive.getRootFile().getId()))
+                File parent = Util.getParent(file);
+                if (!Util.isFileRootFile(parent))
                     path = getPathRecursive(parent, parent.getName());
 
             } else {
