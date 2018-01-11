@@ -133,7 +133,14 @@ public class GDrive {
 
         Options options = new Options();
 
+        //Download all option
         options.addOption("da","downloadall", false, "download all files in drive");
+        //Download file option
+        options.addOption(Option.builder("d").hasArgs()
+                                          .argName("file name in drive")
+                                          .longOpt("download")
+                                          .desc("downloads files from drive with given name and extension")
+                                          .build());
 
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
@@ -149,6 +156,22 @@ public class GDrive {
             if (commandLine.hasOption("da")) {
                 Download.downloadAllFiles();
             }
+            if (commandLine.hasOption("d")) {
+                String[] fileNames = commandLine.getOptionValues("d");
+                for (String fileName : fileNames) {
+                    try {
+                        String query = String.format("name = '%s'", fileName);
+                        FileList result = service.files().list().setQ(query)
+                                .setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
+                        List<File> files = result.getFiles();
+                        System.out.println("Downloading " + fileName + " files");
+                        Download.downloadFiles(files);
+                    } catch (IOException e) {
+                        System.err.println("Could not get files with name " + fileName);
+                    }
+                }
+            }
+            //if (commandLine.hasOption())
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
