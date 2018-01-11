@@ -141,6 +141,8 @@ public class GDrive {
                                           .longOpt("download")
                                           .desc("downloads files from drive with given name and extension")
                                           .build());
+        //Download changes option
+        options.addOption("c","changes", false, "download files that have changed in drive");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
@@ -171,7 +173,9 @@ public class GDrive {
                     }
                 }
             }
-            //if (commandLine.hasOption())
+            if (commandLine.hasOption("c")) {
+                Changes.changes();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
