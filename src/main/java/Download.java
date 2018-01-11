@@ -43,15 +43,17 @@ public class Download {
         return stringBuilder.toString();
     }
 
+    private static void printFileDetails(File file) {
+        System.out.printf("%s (%s) %s | Is folder: %s | Is binary: %s | checksum: %s |\n", file.getName(), file.getId(),
+                          file.getMimeType(), Download.isDirectory(file), Download.isBinaryFile(file), file.getMd5Checksum());
+        System.out.println(file.getName() + " parent: " + file.getParents());
+    }
 
     /*
     Downloads files in the given list of Files
      */
     public static void downloadFiles(List<File> files) {
         for (File file : files) {
-            System.out.println(file.getName());
-            System.out.printf("%s (%s) %s | Is folder: %s | Is binary: %s | checksum: %s |\n", file.getName(), file.getId(), file.getMimeType(), Download.isDirectory(file), Download.isBinaryFile(file), file.getMd5Checksum());
-            System.out.println(file.getName() + " parent: " + file.getParents());
             String path = "/";
 
             if (!isDirectory(file)) {
@@ -107,6 +109,8 @@ public class Download {
                 System.out.println("Couldn't create directory " + path);
             }
         }
+        System.out.println();
+
     }
 
     /*
@@ -148,7 +152,12 @@ public class Download {
 
 
     private static void downloadFile(File file, String path){
+        System.out.println();
+
         System.out.println("File: " + file.getName());
+        if (GDrive.getVerboseValue()) {
+            printFileDetails(file);
+        }
 
         java.io.File parentDir = new java.io.File(path);
         if (!parentDir.exists() && !parentDir.mkdirs())
@@ -186,7 +195,12 @@ public class Download {
     Files like Google Documents need to be exported.
      */
     private static void exportFile(File file, String path) throws IOException {
+        System.out.println();
+
         System.out.println("Google file: " + file.getName());
+        if (GDrive.getVerboseValue()) {
+            printFileDetails(file);
+        }
         Drive service = GDrive.getDriveService();
         String mimeType = exports.get(file.getMimeType());
         if (mimeType != null) {
@@ -208,12 +222,18 @@ public class Download {
         } else {
             System.out.println("Could not download " + file.getName() + ", file type " + file.getMimeType() + " not supported");
         }
+
     }
 
     private static void downloadDirectory(File file, String path) {
+        System.out.println();
+
         System.out.println("Directory: " + file.getName());
+        if (GDrive.getVerboseValue())
+            printFileDetails(file);
         path += file.getName() + '/';
         createLocalDirectory(path);
         downloadRecursive(file, path);
+
     }
 }

@@ -27,6 +27,7 @@ public class GDrive {
     private static final String APPLICATION_NAME =
             "GDrive";
 
+    //TODO: Allow user to set drive_dir
     /** Directory to store files downloaded. */
     private static String drive_dir = System.getProperty("user.home") + "\\gdrive/";
 
@@ -35,7 +36,10 @@ public class GDrive {
     /** Root file of the drive */
     private static File rootFile;
 
+    /** Flag for overwritting files */
     private static boolean overwrite = false;
+    /** Flag for verbose output */
+    private static boolean verbose = false;
 
     /** Directory to store user credentials for this application. */
     private static final java.io.File DATA_STORE_DIR = new java.io.File(
@@ -135,6 +139,10 @@ public class GDrive {
         return overwrite;
     }
 
+    public static boolean getVerboseValue() {
+        return verbose;
+    }
+
     public static void main(String[] args) {
 
         Options options = new Options();
@@ -151,6 +159,8 @@ public class GDrive {
         options.addOption("c","changes", false, "download files that have changed in drive");
         //Overwrite files option
         options.addOption("o", "overwrite", false, "overwrite files that exist when downloading");
+        //Verbose output option
+        options.addOption("v", "verbose", false, "prints more details about files downloading/uploading");
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
 
@@ -162,10 +172,14 @@ public class GDrive {
             HelpFormatter formatter = new HelpFormatter();
 
             formatter.printHelp("Java-GDrive", options);
+            if (commandLine.hasOption("v")) {
+                verbose = true;
+            }
+
             if (commandLine.hasOption("o")) {
                 overwrite = true;
             }
-            
+
             if (commandLine.hasOption("da")) {
                 Download.downloadAllFiles();
             }
