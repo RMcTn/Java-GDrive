@@ -14,6 +14,8 @@ import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
+import org.apache.commons.cli.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -129,23 +131,27 @@ public class GDrive {
 
     public static void main(String[] args) {
 
+        Options options = new Options();
+
+        options.addOption("da","downloadall", false, "download all files in drive");
+
+        CommandLineParser parser = new DefaultParser();
+        CommandLine commandLine;
+
         try {
             service = createDriveService();
             rootFile = service.files().get("root").execute();
-            //Upload all files test code
-//            Upload.uploadFiles();
 
-            //Download all files test code
-            FileList request = service.files().list().setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
-            List<File> files = request.getFiles();
-            //Download.downloadAllFiles();
+            commandLine = parser.parse(options, args);
+            HelpFormatter formatter = new HelpFormatter();
 
-            //Download list of files test code
-            //Download.downloadFiles(files.subList(0, 3));
-
-            //Changes test code
-            Changes.main(null);
+            formatter.printHelp("Java-GDrive", options);
+            if (commandLine.hasOption("da")) {
+                Download.downloadAllFiles();
+            }
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
             e.printStackTrace();
         }
 
