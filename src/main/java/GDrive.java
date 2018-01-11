@@ -35,6 +35,8 @@ public class GDrive {
     /** Root file of the drive */
     private static File rootFile;
 
+    private static boolean overwrite = false;
+
     /** Directory to store user credentials for this application. */
     private static final java.io.File DATA_STORE_DIR = new java.io.File(
             System.getProperty("user.home"), ".credentials/gdrive");
@@ -129,6 +131,10 @@ public class GDrive {
         return rootFile;
     }
 
+    public static boolean getOverwriteValue() {
+        return overwrite;
+    }
+
     public static void main(String[] args) {
 
         Options options = new Options();
@@ -143,7 +149,8 @@ public class GDrive {
                                           .build());
         //Download changes option
         options.addOption("c","changes", false, "download files that have changed in drive");
-
+        //Overwrite files option
+        options.addOption("o", "overwrite", false, "overwrite files that exist when downloading");
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
 
@@ -155,9 +162,14 @@ public class GDrive {
             HelpFormatter formatter = new HelpFormatter();
 
             formatter.printHelp("Java-GDrive", options);
+            if (commandLine.hasOption("o")) {
+                overwrite = true;
+            }
+            
             if (commandLine.hasOption("da")) {
                 Download.downloadAllFiles();
             }
+
             if (commandLine.hasOption("d")) {
                 String[] fileNames = commandLine.getOptionValues("d");
                 for (String fileName : fileNames) {
@@ -173,13 +185,15 @@ public class GDrive {
                     }
                 }
             }
+
             if (commandLine.hasOption("c")) {
                 Changes.changes();
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
-            e.printStackTrace();
+            System.err.println("Could not parse arguments: " + e.getMessage());
         }
 
     }

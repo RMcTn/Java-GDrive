@@ -146,30 +146,42 @@ public class Download {
         }
     }
 
-    /*
-    Download a binary file
-     */
-    private static void downloadFile(File file, String path) throws IOException {
+
+    private static void downloadFile(File file, String path){
         System.out.println("File: " + file.getName());
 
         java.io.File parentDir = new java.io.File(path);
         if (!parentDir.exists() && !parentDir.mkdirs())
-            throw new IOException("Failed to create parent directory");
+            System.err.println("Failed to create parent directory for file " + file.getName());
 
         java.io.File fileToSave = new java.io.File(path + file.getName());
-        //TODO: Add option to overwrite file
-        if (fileToSave.exists()) {
+
+        if (fileToSave.exists() && !GDrive.getOverwriteValue()) {
             System.out.println("File " + file.getName() + " exists, skipping.");
             return;
+        } else {
+            downloadBinaryFile(fileToSave, file.getId());
         }
 
-        OutputStream fileOutputStream = new FileOutputStream(fileToSave);
-        Drive service = GDrive.getDriveService();
-        service.files().get(file.getId())
-                .executeMediaAndDownloadTo(fileOutputStream);
-        fileOutputStream.close();
     }
 
+    /*
+    Download a binary file from the user's drive with the id driveFileID,
+    saving it to the given java.io.File
+     */
+    private static void downloadBinaryFile(java.io.File file, String driveFileID) {
+        try {
+            OutputStream fileOutputStream = new FileOutputStream(file);
+            Drive service = GDrive.getDriveService();
+            service.files().get(driveFileID)
+                    .executeMediaAndDownloadTo(fileOutputStream);
+            fileOutputStream.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("Could not create file stream with " + file.getName() + ": " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Could not download file " + file.getName() + ": " + e.getMessage());
+        }
+    }
     /*
     Files like Google Documents need to be exported.
      */
@@ -184,7 +196,7 @@ public class Download {
             String extension = "." + mimeType.substring(mimeType.lastIndexOf("/") + 1);
             java.io.File fileToSave = new java.io.File(path + file.getName() + extension);
 
-            if (fileToSave.exists()) {
+            if (fileToSave.exists() && !GDrive.getOverwriteValue()) {
                 System.out.println("File " + file.getName() + " exists, skipping.");
                 return;
             }
