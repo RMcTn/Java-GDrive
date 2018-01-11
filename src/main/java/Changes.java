@@ -42,7 +42,7 @@ public class Changes {
         return changeList;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void changes() throws IOException {
         Drive service = GDrive.getDriveService();
 
         StartPageToken pageTokenResponse = service.changes().getStartPageToken().execute();
