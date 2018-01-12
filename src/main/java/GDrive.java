@@ -29,7 +29,7 @@ public class GDrive {
 
     //TODO: Allow user to set drive_dir
     /** Directory to store files downloaded. */
-    private static String drive_dir = System.getProperty("user.home") + "\\gdrive/";
+    private static String drive_dir = System.getProperty("user.home") + "/gdrive/";
 
     private static Drive service;
 
