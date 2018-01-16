@@ -155,6 +155,9 @@ public class GDrive {
                                           .longOpt("download")
                                           .desc("downloads files from drive with given name and extension")
                                           .build());
+        //Upload All option
+        options.addOption("ua","uploadall", false, "upload all files in the " +
+                "gdrive directory to the drive. Will NOT overwrite files, so duplicates can happen");
         //Download changes option
         options.addOption("c","changes", false, "download files that have changed in drive");
         //Overwrite files option
@@ -198,6 +201,10 @@ public class GDrive {
                         System.err.println("Could not get files with name " + fileName);
                     }
                 }
+            }
+
+            if (commandLine.hasOption("ua")) {
+                Upload.uploadAllFiles();
             }
 
             if (commandLine.hasOption("c")) {
