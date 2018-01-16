@@ -17,6 +17,7 @@ This is NOT to sync, duplicates will be created when used if files are already o
 
 public class Upload {
 
+    //TODO: Add verbose messages for uploading (set mimetype, parents etc)
 
     /*
     Creates a new Google file and sets its name, mimetype and parents from a local file, and a list of parents
@@ -42,7 +43,6 @@ public class Upload {
     private static void uploadFile(java.io.File file, File parent) throws IOException {
         List<String> parents = new ArrayList<>();
         parents.add(parent.getId());
-
         File fileToUpload = createFileToUpload(file, parents);
 
         FileContent mediaContent = new FileContent(fileToUpload.getMimeType(), file);
@@ -90,7 +90,7 @@ public class Upload {
     /*
     Uploads all files in the drive_dir path
      */
-    public static void uploadFiles() {
+    public static void uploadAllFiles() {
         Drive service = GDrive.getDriveService();
         String path = GDrive.getDrive_dir();
         java.io.File dummyRootFile = new java.io.File(path);
