@@ -30,9 +30,15 @@ public class Changes {
     /*
     Reads the previously saved page token from the token file
      */
-    private static String readSavedPageToken() throws IOException {
+    private static String readSavedPageToken() throws FileNotFoundException {
+        try {
             BufferedReader tokenReader = new BufferedReader(new FileReader(PAGE_TOKEN_FILENAME));
             return tokenReader.readLine();
+
+        } catch (IOException e) {
+            System.err.println("Could not read token file named " + PAGE_TOKEN_FILENAME + ": " + e.getMessage());
+        }
+        return null;
     }
 
     private static ChangeList getChangeList(String pageToken) throws IOException {
@@ -42,12 +48,20 @@ public class Changes {
         return changeList;
     }
 
-    public static void changes() throws IOException {
+    public static void changes(){
         Drive service = GDrive.getDriveService();
-
-        StartPageToken pageTokenResponse = service.changes().getStartPageToken().execute();
-        String savedPageToken = pageTokenResponse.getStartPageToken();
+        StartPageToken pageTokenResponse;
+        String savedPageToken;
         String pageToken;
+
+        try {
+            pageTokenResponse = service.changes().getStartPageToken().execute();
+            savedPageToken = pageTokenResponse.getStartPageToken();
+
+        } catch (IOException e) {
+            System.err.println("Could not get start page token from Drive: " + e.getMessage());
+            return;
+        }
 
         try {
             pageToken = readSavedPageToken();
@@ -55,21 +69,26 @@ public class Changes {
             updateSavedPageToken(savedPageToken);
             pageToken = savedPageToken;
         }
+
         updateSavedPageToken(savedPageToken);
 
         List<File> changedFiles = new ArrayList<>();
-        while (pageToken != null) {
-            ChangeList changeList = getChangeList(pageToken);
-            for (Change change : changeList.getChanges()) {
-                //Deal with change stuff
-                System.out.println("Change found for " + change.getFile().getName());
-                changedFiles.add(change.getFile());
+        try {
+            while (pageToken != null) {
+                ChangeList changeList = getChangeList(pageToken);
+                for (Change change : changeList.getChanges()) {
+                    //Deal with change stuff
+                    System.out.println("Change found for " + change.getFile().getName());
+                    changedFiles.add(change.getFile());
+                }
+                if (changeList.getNewStartPageToken() != null) {
+                    //Reached the last page, save page token
+                    savedPageToken = changeList.getNewStartPageToken();
+                }
+                pageToken = changeList.getNextPageToken();
             }
-            if (changeList.getNewStartPageToken() != null) {
-                //Reached the last page, save page token
-                savedPageToken = changeList.getNewStartPageToken();
-            }
-            pageToken = changeList.getNextPageToken();
+        } catch (IOException e) {
+            System.err.println("Could not get changes from Drive: " + e.getMessage());
         }
         updateSavedPageToken(savedPageToken);
 
