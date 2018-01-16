@@ -164,6 +164,14 @@ public class GDrive {
         options.addOption("o", "overwrite", false, "overwrite files that exist when downloading");
         //Verbose output option
         options.addOption("v", "verbose", false, "prints more details about files downloading/uploading");
+
+        //Details for files option
+        options.addOption(Option.builder("de").hasArgs()
+                .argName("file name in drive")
+                .longOpt("details")
+                .desc("prints details about the files in the drive with the given name")
+                .build());
+
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
 
@@ -175,6 +183,17 @@ public class GDrive {
             HelpFormatter formatter = new HelpFormatter();
 
             formatter.printHelp("Java-GDrive", options);
+
+            if (commandLine.hasOption("q")) {
+                FileList result = service.files().list().setQ("name = 'test.txt'")
+                        .setFields("files(id, name, mimeType, md5Checksum, parents, createdTime, modifiedTime, description)").execute();
+                List<File> files = result.getFiles();
+                for (File file : files)
+                    Details.printDriveFileDetails(file);
+
+                Update.updateFile("0B5KrqZJM03agcmhEQ0hqbVFvS0U", "test.txt");
+            }
+
             if (commandLine.hasOption("v")) {
                 verbose = true;
             }
@@ -209,6 +228,22 @@ public class GDrive {
 
             if (commandLine.hasOption("c")) {
                 Changes.changes();
+            }
+
+            if (commandLine.hasOption("de")) {
+                String[] fileNames = commandLine.getOptionValues("de");
+                for (String fileName : fileNames) {
+                    try {
+                        String query = String.format("name = '%s'", fileName);
+                        FileList result = service.files().list().setQ(query).setFields("files(id, name, " +
+                                "mimeType, md5Checksum, parents, createdTime, modifiedTime)").execute();
+                        List<File> files = result.getFiles();
+                        for (File file : files)
+                            Details.printDriveFileDetails(file);
+                    } catch (IOException e) {
+                        System.err.println("Could not get files with name " + fileName + " " + e.getMessage());
+                    }
+                }
             }
 
         } catch (IOException e) {
