@@ -26,6 +26,10 @@ public class Update {
         return result;
     }
 
+    /*
+    Updates the content of a drive file with ID driveFileID, from the content of the local file
+    Uses ID since trying to match the file exactly is a huge pain
+     */
     public static void updateFile(String driveFileID, String localFileName) {
         Drive service = GDrive.getDriveService();
         String path = GDrive.getDrive_dir() + localFileName;
