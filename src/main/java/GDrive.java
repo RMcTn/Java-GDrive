@@ -203,6 +203,7 @@ public class GDrive {
                 Download.downloadAllFiles();
             }
 
+            //Download with file names
             if (commandLine.hasOption("d")) {
                 String[] fileNames = commandLine.getOptionValues("d");
                 for (String fileName : fileNames) {
@@ -219,6 +220,7 @@ public class GDrive {
                 }
             }
 
+            //Download with file ids
             if (commandLine.hasOption("di")) {
                 String[] fileIDs = commandLine.getOptionValues("di");
                 List<File> files = new ArrayList<>();
@@ -238,10 +240,13 @@ public class GDrive {
                 Upload.uploadAllFiles();
             }
 
+            //Download changes
             if (commandLine.hasOption("c")) {
                 Changes.changes();
             }
 
+            //Details using file names
+            //TODO: Add option for getting details using file IDs?
             if (commandLine.hasOption("de")) {
                 String[] fileNames = commandLine.getOptionValues("de");
                 for (String fileName : fileNames) {
