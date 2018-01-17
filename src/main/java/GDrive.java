@@ -184,16 +184,6 @@ public class GDrive {
 
             formatter.printHelp("Java-GDrive", options);
 
-            if (commandLine.hasOption("q")) {
-                FileList result = service.files().list().setQ("name = 'test.txt'")
-                        .setFields("files(id, name, mimeType, md5Checksum, parents, createdTime, modifiedTime, description)").execute();
-                List<File> files = result.getFiles();
-                for (File file : files)
-                    Details.printDriveFileDetails(file);
-
-                Update.updateFile("0B5KrqZJM03agcmhEQ0hqbVFvS0U", "test.txt");
-            }
-
             if (commandLine.hasOption("v")) {
                 verbose = true;
             }
