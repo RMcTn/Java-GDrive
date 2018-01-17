@@ -19,6 +19,7 @@ import org.apache.commons.cli.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -149,12 +150,18 @@ public class GDrive {
 
         //Download all option
         options.addOption("da","downloadall", false, "download all files in drive");
-        //Download file option
+        //Download file with name option
         options.addOption(Option.builder("d").hasArgs()
-                                          .argName("file name in drive")
-                                          .longOpt("download")
-                                          .desc("downloads files from drive with given name and extension")
-                                          .build());
+                .argName("file name in drive")
+                .longOpt("download")
+                .desc("downloads files from drive with given name and extension")
+                .build());
+        //Download file with ID option
+        options.addOption(Option.builder("di").hasArgs()
+                .argName("file ID in drive")
+                .longOpt("downloadID")
+                .desc("downloads files from drive with given ID (On drive)")
+                .build());
         //Upload All option
         options.addOption("ua","uploadall", false, "upload all files in the " +
                 "gdrive directory to the drive. Will NOT overwrite files, so duplicates can happen");
@@ -184,16 +191,6 @@ public class GDrive {
 
             formatter.printHelp("Java-GDrive", options);
 
-            if (commandLine.hasOption("q")) {
-                FileList result = service.files().list().setQ("name = 'test.txt'")
-                        .setFields("files(id, name, mimeType, md5Checksum, parents, createdTime, modifiedTime, description)").execute();
-                List<File> files = result.getFiles();
-                for (File file : files)
-                    Details.printDriveFileDetails(file);
-
-                Update.updateFile("0B5KrqZJM03agcmhEQ0hqbVFvS0U", "test.txt");
-            }
-
             if (commandLine.hasOption("v")) {
                 verbose = true;
             }
@@ -220,6 +217,21 @@ public class GDrive {
                         System.err.println("Could not get files with name " + fileName);
                     }
                 }
+            }
+
+            if (commandLine.hasOption("di")) {
+                String[] fileIDs = commandLine.getOptionValues("di");
+                List<File> files = new ArrayList<>();
+                for (String fileID : fileIDs) {
+                    try {
+                        File file = service.files().get(fileID)
+                                .setFields("id, name, mimeType, md5Checksum, parents").execute();
+                        files.add(file);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                Download.downloadFiles(files);
             }
 
             if (commandLine.hasOption("ua")) {
