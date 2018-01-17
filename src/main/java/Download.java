@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public class Download {
-
     private static Map<String, String> exports = createExportMap();
 
     private static Map<String, String> createExportMap() {

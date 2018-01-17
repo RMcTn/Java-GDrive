@@ -19,6 +19,7 @@ import org.apache.commons.cli.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -149,12 +150,18 @@ public class GDrive {
 
         //Download all option
         options.addOption("da","downloadall", false, "download all files in drive");
-        //Download file option
+        //Download file with name option
         options.addOption(Option.builder("d").hasArgs()
-                                          .argName("file name in drive")
-                                          .longOpt("download")
-                                          .desc("downloads files from drive with given name and extension")
-                                          .build());
+                .argName("file name in drive")
+                .longOpt("download")
+                .desc("downloads files from drive with given name and extension")
+                .build());
+        //Download file with ID option
+        options.addOption(Option.builder("di").hasArgs()
+                .argName("file ID in drive")
+                .longOpt("downloadID")
+                .desc("downloads files from drive with given ID (On drive)")
+                .build());
         //Upload All option
         options.addOption("ua","uploadall", false, "upload all files in the " +
                 "gdrive directory to the drive. Will NOT overwrite files, so duplicates can happen");
@@ -196,6 +203,7 @@ public class GDrive {
                 Download.downloadAllFiles();
             }
 
+            //Download with file names
             if (commandLine.hasOption("d")) {
                 String[] fileNames = commandLine.getOptionValues("d");
                 for (String fileName : fileNames) {
@@ -212,14 +220,33 @@ public class GDrive {
                 }
             }
 
+            //Download with file ids
+            if (commandLine.hasOption("di")) {
+                String[] fileIDs = commandLine.getOptionValues("di");
+                List<File> files = new ArrayList<>();
+                for (String fileID : fileIDs) {
+                    try {
+                        File file = service.files().get(fileID)
+                                .setFields("id, name, mimeType, md5Checksum, parents").execute();
+                        files.add(file);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                Download.downloadFiles(files);
+            }
+
             if (commandLine.hasOption("ua")) {
                 Upload.uploadAllFiles();
             }
 
+            //Download changes
             if (commandLine.hasOption("c")) {
                 Changes.changes();
             }
 
+            //Details using file names
+            //TODO: Add option for getting details using file IDs?
             if (commandLine.hasOption("de")) {
                 String[] fileNames = commandLine.getOptionValues("de");
                 for (String fileName : fileNames) {
