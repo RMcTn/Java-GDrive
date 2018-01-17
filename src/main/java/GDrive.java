@@ -218,6 +218,9 @@ public class GDrive {
                 " (User's home directory/gdrive/")
                 .build());
 
+        //Help option
+        options.addOption("h", "help", false, "displays this text");
+
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
 
@@ -226,10 +229,6 @@ public class GDrive {
             rootFile = service.files().get("root").execute();
 
             commandLine = parser.parse(options, args);
-            HelpFormatter formatter = new HelpFormatter();
-
-            formatter.printHelp("Java-GDrive", options);
-
 
             if (commandLine.hasOption("sd")) {
                 String directoryName = commandLine.getOptionValue("sd");
@@ -329,11 +328,16 @@ public class GDrive {
                 }
             }
 
+            if (commandLine.hasOption("h")) {
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp("Java-GDrive", options);
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
             System.err.println("Could not parse arguments: " + e.getMessage());
+            System.out.println("Try use the -h option for help");
         }
 
     }
