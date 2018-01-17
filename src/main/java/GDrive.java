@@ -16,9 +16,7 @@ import com.google.api.services.drive.model.FileList;
 
 import org.apache.commons.cli.*;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,9 +26,9 @@ public class GDrive {
     private static final String APPLICATION_NAME =
             "GDrive";
 
-    //TODO: Allow user to set drive_dir
+    private static String DEFAULT_DRIVE_DIR = System.getProperty("user.home") + "/gdrive/";
     /** Directory to store files downloaded. */
-    private static String drive_dir = System.getProperty("user.home") + "/gdrive/";
+    private static String drive_dir = DEFAULT_DRIVE_DIR;
 
     private static Drive service;
 
@@ -41,6 +39,9 @@ public class GDrive {
     private static boolean overwrite = false;
     /** Flag for verbose output */
     private static boolean verbose = false;
+
+    /** File to store directory to download/upload to/from */
+    private static final String DIRECTORY_STORE_FILENAME = "/directory_store";
 
     /** Directory to store user credentials for this application. */
     private static final java.io.File DATA_STORE_DIR = new java.io.File(
@@ -144,7 +145,36 @@ public class GDrive {
         return verbose;
     }
 
+    private static String readFromDirectoryStoreFile() {
+        try {
+            BufferedReader tokenReader = new BufferedReader(new FileReader(DATA_STORE_DIR + DIRECTORY_STORE_FILENAME));
+            return tokenReader.readLine();
+
+        } catch (IOException e) {
+            System.err.println("Could not read saved directory from directory store file : " + e.getMessage());
+        }
+        return null;
+    }
+
+    private static void writeToDirectoryStoreFile(String directoryName) {
+        try {
+            PrintWriter writer = new PrintWriter(DATA_STORE_DIR + DIRECTORY_STORE_FILENAME, "UTF-8");
+            writer.write(directoryName);
+            writer.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("Error writing new directory to directory store file. Directory has not changed");
+        } catch (UnsupportedEncodingException e) {
+            //TODO: handle this
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
+
+        //Try to read driveDir from file in case it has been changed
+        String driveDir = readFromDirectoryStoreFile();
+        if (driveDir != null)
+            setDrive_dir(driveDir);
 
         Options options = new Options();
 
@@ -179,6 +209,15 @@ public class GDrive {
                 .desc("prints details about the files in the drive with the given name")
                 .build());
 
+        //Set drive directory option
+        options.addOption("sd", "setdir", true, "change directory of where files will be" +
+                " downloaded to and uploaded from (will NOT cleanup previous folders)");
+        //Set drive directory to default option
+        options.addOption(Option.builder("defaultdir")
+                .desc("sets directory of where files will be downloaded to and uploaded from to the default " +
+                " (User's home directory/gdrive/")
+                .build());
+
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
 
@@ -190,6 +229,33 @@ public class GDrive {
             HelpFormatter formatter = new HelpFormatter();
 
             formatter.printHelp("Java-GDrive", options);
+
+
+            if (commandLine.hasOption("sd")) {
+                String directoryName = commandLine.getOptionValue("sd");
+                String lastCharacter = directoryName.substring(directoryName.length());
+                if (!lastCharacter.equals("\\") || !lastCharacter.equals("/")) {
+                    directoryName += '/';
+                }
+                java.io.File newDirectory = new java.io.File(directoryName);
+
+                if (!newDirectory.exists()) {
+                    if (!newDirectory.mkdirs()) {
+                        System.err.println("Could not make directory " + directoryName);
+                    }
+                }
+
+                writeToDirectoryStoreFile(directoryName);
+
+                setDrive_dir(directoryName);
+                System.out.println("Set directory to " + directoryName);
+            }
+
+            if (commandLine.hasOption("defaultdir")) {
+                setDrive_dir(DEFAULT_DRIVE_DIR);
+                writeToDirectoryStoreFile(DEFAULT_DRIVE_DIR);
+                System.out.println("Set directory to " + DEFAULT_DRIVE_DIR);
+            }
 
             if (commandLine.hasOption("v")) {
                 verbose = true;
@@ -262,6 +328,7 @@ public class GDrive {
                     }
                 }
             }
+
 
         } catch (IOException e) {
             e.printStackTrace();
