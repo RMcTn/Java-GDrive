@@ -240,7 +240,10 @@ public class GDrive {
 
                 if (!newDirectory.exists()) {
                     if (!newDirectory.mkdirs()) {
-                        System.err.println("Could not make directory " + directoryName);
+                        if (!newDirectory.getParentFile().canWrite())
+                            System.err.println("Can't write in directory " + newDirectory.getParentFile().getName());
+                        System.err.println("Could not make directory " + directoryName + "  Directory settings unchanged");
+                        return;
                     }
                 }
 
