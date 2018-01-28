@@ -88,7 +88,19 @@ public class Download {
     }
 
     private static void createLocalDirectories(String path) {
-        path = path.substring(path.indexOf("/"));
+        //TODO: Maybe just replace the set GDrive directory string with UNIX slashes.
+        /*
+        Deal with GDrive directory being in the path as this can cause
+        those folders being created inside, causing files to download to wrong places
+         */
+        if (path.startsWith(GDrive.getDrive_dir())) {
+            //Replace any Windows directory slashes with UNIX slashes
+            path = path.replaceAll("\\\\", "/");
+            String tempDriveDir = GDrive.getDrive_dir().replaceAll("\\\\", "/");
+            String[] pathSplit = path.split(tempDriveDir);
+            //pathSplit should be split into GDrive directory, and the rest of the folders we want to deal with
+            path = pathSplit[1];
+        }
         String[] directoriesToCreate = path.split("/");
         path = GDrive.getDrive_dir();
         for (String directory : directoriesToCreate) {
@@ -190,37 +202,43 @@ public class Download {
             System.out.println("Could not download file " + file.getName() + ": " + e.getMessage());
         }
     }
+
     /*
     Files like Google Documents need to be exported.
      */
     private static void exportFile(File file, String path) throws IOException {
-        System.out.println();
+            System.out.println();
 
-        System.out.println("Google file: " + file.getName());
-        if (GDrive.getVerboseValue()) {
-            printFileDetails(file);
-        }
-        Drive service = GDrive.getDriveService();
-        String mimeType = exports.get(file.getMimeType());
-        if (mimeType != null) {
-
-            //File extensions are taken as the text after the last '/' from the equivalent
-            //mimetype. Seems like a bad solution, should change.
-            String extension = "." + mimeType.substring(mimeType.lastIndexOf("/") + 1);
-            java.io.File fileToSave = new java.io.File(path + file.getName() + extension);
-
-            if (fileToSave.exists() && !GDrive.getOverwriteValue()) {
-                System.out.println("File " + file.getName() + " exists, skipping.");
-                return;
+            System.out.println("Google file: " + file.getName());
+            if (GDrive.getVerboseValue()) {
+                printFileDetails(file);
             }
+            Drive service = GDrive.getDriveService();
+            String mimeType = exports.get(file.getMimeType());
+            if (mimeType != null) {
 
-            OutputStream fileOutputStream = new FileOutputStream(fileToSave);
-            service.files().export(file.getId(), exports.get(file.getMimeType()))
-                    .executeMediaAndDownloadTo(fileOutputStream);
-            fileOutputStream.close();
-        } else {
-            System.out.println("Could not download " + file.getName() + ", file type " + file.getMimeType() + " not supported");
-        }
+                //File extensions are taken as the text after the last '/' from the equivalent
+                //mimetype. Seems like a bad solution, should change.
+                String extension = "." + mimeType.substring(mimeType.lastIndexOf("/") + 1);
+
+                java.io.File fileToSave = new java.io.File(path + file.getName() + extension);
+
+                if (fileToSave.exists() && !GDrive.getOverwriteValue()) {
+                    System.out.println("File " + file.getName() + " exists, skipping.");
+                    return;
+                }
+                try {
+                    OutputStream fileOutputStream = new FileOutputStream(fileToSave);
+                    service.files().export(file.getId(), exports.get(file.getMimeType()))
+                            .executeMediaAndDownloadTo(fileOutputStream);
+                    fileOutputStream.close();
+                } catch (FileNotFoundException e) {
+                    System.err.println("Could not export file " + file.getName() + ". " + e.getMessage());
+                }
+
+            } else {
+                System.out.println("Could not download " + file.getName() + ", file type " + file.getMimeType() + " not supported");
+            }
 
     }
 
