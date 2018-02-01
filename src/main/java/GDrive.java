@@ -170,7 +170,7 @@ public class GDrive {
     }
 
     public static void main(String[] args) {
-
+        //TODO: Add listing all files
         //Try to read driveDir from file in case it has been changed
         String driveDir = readFromDirectoryStoreFile();
         if (driveDir != null)
@@ -220,6 +220,9 @@ public class GDrive {
 
         //Help option
         options.addOption("h", "help", false, "displays this text");
+
+        //List all files option
+        options.addOption("la", "listall", false, "list all files in the drive");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
@@ -334,6 +337,10 @@ public class GDrive {
             if (commandLine.hasOption("h")) {
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("Java-GDrive", options);
+            }
+
+            if (commandLine.hasOption("la")) {
+                Details.listAll();
             }
 
         } catch (IOException e) {
