@@ -41,6 +41,9 @@ public class GDrive {
     /** Flag for verbose output */
     private static boolean verbose = false;
 
+    /** Flag for using filenames instead of file IDs for some options */
+    private static boolean useFilenames = true;
+
     /** File to store directory to download/upload to/from */
     private static final String DIRECTORY_STORE_FILENAME = "/directory_store";
 
@@ -212,6 +215,7 @@ public class GDrive {
                 .desc("downloads files from drive with given name and extension")
                 .build());
         //Download file with ID option
+        //TODO: Remove this and use new --fileID option
         options.addOption(Option.builder("di").hasArgs()
                 .argName("file ID in drive")
                 .longOpt("downloadID")
@@ -229,7 +233,7 @@ public class GDrive {
 
         //Details for files option
         options.addOption(Option.builder("de").hasArgs()
-                .argName("file name in drive")
+                .argName("file name in drive (file ID with --useID)")
                 .longOpt("details")
                 .desc("prints details about the files in the drive with the given name")
                 .build());
@@ -249,12 +253,18 @@ public class GDrive {
         //List all files option
         options.addOption("la", "listall", false, "list all files in the drive");
 
+        //Delete file option
         options.addOption(Option.builder().hasArgs()
-                .argName("file name in drive")
+                .argName("file name in drive (file ID with --useID)")
                 .longOpt("delete")
                 .desc("deletes the files with the given filename (This will delete all matches of given filename)")
                 .build());
 
+        //Use file ID option
+        options.addOption(Option.builder()
+                .longOpt("useID")
+                .desc("Use file ID instead of filename for some options")
+                .build());
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
 
@@ -263,6 +273,10 @@ public class GDrive {
             rootFile = service.files().get("root").execute();
 
             commandLine = parser.parse(options, args);
+
+            if (commandLine.hasOption("useID")) {
+                useFilenames = false;
+            }
 
             if (commandLine.hasOption("sd")) {
                 String directoryName = commandLine.getOptionValue("sd");
@@ -349,19 +363,25 @@ public class GDrive {
             }
 
             //Details using file names
-            //TODO: Add option for getting details using file IDs?
             if (commandLine.hasOption("de")) {
-                String[] fileNames = commandLine.getOptionValues("de");
-                for (String fileName : fileNames) {
+                String fileFields = "id, name, mimeType, md5Checksum, parents, createdTime, modifiedTime";
+                String[] fileSelectors = commandLine.getOptionValues("de");
+                for (String fileSelector : fileSelectors) {
                     try {
-                        String query = String.format("name = '%s'", fileName);
-                        FileList result = service.files().list().setQ(query).setFields("files(id, name, " +
-                                "mimeType, md5Checksum, parents, createdTime, modifiedTime)").execute();
-                        List<File> files = result.getFiles();
-                        for (File file : files)
+                        if (useFilenames) {
+                            String query = String.format("name = '%s'", fileSelector);
+                            String filesFields = String.format("files(%s)", fileFields);
+                            FileList result = service.files().list().setQ(query).setFields(filesFields).execute();
+                            List<File> files = result.getFiles();
+                            for (File file : files)
+                                Details.printDriveFileDetails(file);
+                        } else {
+                            //File ID
+                            File file = service.files().get(fileSelector).setFields(fileFields).execute();
                             Details.printDriveFileDetails(file);
+                        }
                     } catch (IOException e) {
-                        System.err.println("Could not get files with name " + fileName + " " + e.getMessage());
+                        System.err.println("Could not get files with name or ID " + fileSelector + " " + e.getMessage());
                     }
                 }
             }
