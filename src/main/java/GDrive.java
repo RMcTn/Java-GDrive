@@ -20,6 +20,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 
 public class GDrive {
     /** Application name. */
@@ -169,8 +170,32 @@ public class GDrive {
         }
     }
 
+    public static void delete(File file) {
+        try {
+            Scanner scanner = new Scanner(System.in);
+            char input;
+            do {
+                System.out.printf("Are you sure you want to delete file %s (%s)? y/n\n", file.getName(), file.getId());
+                input = scanner.next().toLowerCase().charAt(0);
+
+                if (input == 'n') {
+                    System.out.printf("Not deleting file %s (%s)\n", file.getName(), file.getId());
+                    return;
+                } else {
+                    break;
+                }
+            } while (input != 'y' || input != 'n');
+            System.out.println("Attempting to delete...");
+            service.files().delete(file.getId()).execute();
+            System.out.printf("Successfully deleted file %s (%s)\n", file.getName(), file.getId());
+        } catch (IOException e) {
+            System.err.printf("Could not delete file %s (%s)\n", file.getName(), file.getId());
+        }
+
+    }
+
     public static void main(String[] args) {
-        //TODO: Add listing all files
+
         //Try to read driveDir from file in case it has been changed
         String driveDir = readFromDirectoryStoreFile();
         if (driveDir != null)
@@ -223,6 +248,12 @@ public class GDrive {
 
         //List all files option
         options.addOption("la", "listall", false, "list all files in the drive");
+
+        options.addOption(Option.builder().hasArgs()
+                .argName("file name in drive")
+                .longOpt("delete")
+                .desc("deletes the files with the given filename (This will delete all matches of given filename)")
+                .build());
 
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
@@ -313,6 +344,7 @@ public class GDrive {
 
             //Download changes
             if (commandLine.hasOption("c")) {
+                //TODO: Add option for listing changes
                 Changes.changes();
             }
 
@@ -341,6 +373,21 @@ public class GDrive {
 
             if (commandLine.hasOption("la")) {
                 Details.listAll();
+            }
+
+            if (commandLine.hasOption("delete")) {
+                String[] fileNames = commandLine.getOptionValues("delete");
+                for (String fileName : fileNames) {
+                    try {
+                        String query = String.format("name = '%s'", fileName);
+                        FileList result = service.files().list().setQ(query).setFields("files(id, name)").execute();
+                        List<File> files = result.getFiles();
+                        for (File file : files)
+                            delete(file);
+                    } catch (IOException e) {
+                        System.err.println("Could not get files with name " + fileName + ": " + e.getMessage());
+                    }
+                }
             }
 
         } catch (IOException e) {
