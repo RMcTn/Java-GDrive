@@ -396,16 +396,25 @@ public class GDrive {
             }
 
             if (commandLine.hasOption("delete")) {
-                String[] fileNames = commandLine.getOptionValues("delete");
-                for (String fileName : fileNames) {
+                String fileFields = "id, name";
+                String[] fileSelectors = commandLine.getOptionValues("delete");
+                for (String fileSelector : fileSelectors) {
                     try {
-                        String query = String.format("name = '%s'", fileName);
-                        FileList result = service.files().list().setQ(query).setFields("files(id, name)").execute();
-                        List<File> files = result.getFiles();
-                        for (File file : files)
+                        if (useFilenames) {
+                            String query = String.format("name = '%s'", fileSelector);
+                            String filesFields = String.format("files(%s)", fileFields);
+                            FileList result = service.files().list().setQ(query).setFields(filesFields).execute();
+                            List<File> files = result.getFiles();
+                            for (File file : files)
+                                delete(file);
+                        } else {
+                            //Use file IDs
+                            File file = service.files().get(fileSelector).setFields(fileFields).execute();
                             delete(file);
+                        }
+
                     } catch (IOException e) {
-                        System.err.println("Could not get files with name " + fileName + ": " + e.getMessage());
+                        System.err.println("Could not get files with name or ID " + fileSelector + ": " + e.getMessage());
                     }
                 }
             }
