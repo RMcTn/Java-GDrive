@@ -22,7 +22,7 @@ public class Upload {
     /*
     Creates a new Google file and sets its name, mimetype and parents from a local file, and a list of parents
      */
-    private static File createFileToUpload(java.io.File localFile, List<String> parents) throws IOException {
+    private File createFileToUpload(java.io.File localFile, List<String> parents) throws IOException {
         File newFile = new File();
         newFile.setName(localFile.getName());
         if (localFile.isDirectory()) {
@@ -40,7 +40,7 @@ public class Upload {
     /*
     Uploads a local file to the user's Google Drive in the format of a Google file
      */
-    private static void uploadFile(java.io.File file, File parent) throws IOException {
+    private void uploadFile(java.io.File file, File parent) throws IOException {
         List<String> parents = new ArrayList<>();
         parents.add(parent.getId());
         File fileToUpload = createFileToUpload(file, parents);
@@ -58,7 +58,7 @@ public class Upload {
     /*
     Uploads a local directory to the user's Google Drive in the format of a Google folder
      */
-    private static void uploadDirectory(java.io.File file, File parent) throws IOException {
+    private void uploadDirectory(java.io.File file, File parent) throws IOException {
         List<String> parents = new ArrayList<>();
         parents.add(parent.getId());
 
@@ -78,7 +78,7 @@ public class Upload {
 
     }
 
-    private static void uploadRecursive(java.io.File[] filesToUpload, File parent) throws IOException {
+    private void uploadRecursive(java.io.File[] filesToUpload, File parent) throws IOException {
         for (java.io.File file : filesToUpload) {
             if (file.isDirectory())
                 uploadDirectory(file, parent);
@@ -90,7 +90,7 @@ public class Upload {
     /*
     Uploads all files in the drive_dir path
      */
-    public static void uploadAllFiles() {
+    public void uploadAllFiles() {
         Drive service = GDrive.getDriveService();
         String path = GDrive.getDrive_dir();
         java.io.File dummyRootFile = new java.io.File(path);

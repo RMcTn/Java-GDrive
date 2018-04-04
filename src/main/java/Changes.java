@@ -15,7 +15,7 @@ public class Changes {
     /*
     Writes a new page token to the token file so it is saved for future changes in the user's drive
      */
-    private static void updateSavedPageToken(String newToken) {
+    private void updateSavedPageToken(String newToken) {
         try {
             PrintWriter writer = new PrintWriter(PAGE_TOKEN_FILENAME, "UTF-8");
             writer.write(newToken);
@@ -30,7 +30,7 @@ public class Changes {
     /*
     Reads the previously saved page token from the token file
      */
-    private static String readSavedPageToken() throws FileNotFoundException {
+    private String readSavedPageToken() throws FileNotFoundException {
         try {
             BufferedReader tokenReader = new BufferedReader(new FileReader(PAGE_TOKEN_FILENAME));
             return tokenReader.readLine();
@@ -41,14 +41,14 @@ public class Changes {
         return null;
     }
 
-    private static ChangeList getChangeList(String pageToken) throws IOException {
+    private ChangeList getChangeList(String pageToken) throws IOException {
         Drive service = GDrive.getDriveService();
         ChangeList changeList = service.changes().list(pageToken).setFields("nextPageToken, newStartPageToken, " +
                 "changes(file(id, name, mimeType, md5Checksum, parents))").execute();
         return changeList;
     }
 
-    public static void changes(){
+    public void changes(){
         Drive service = GDrive.getDriveService();
         StartPageToken pageTokenResponse;
         String savedPageToken;
@@ -91,8 +91,8 @@ public class Changes {
             System.err.println("Could not get changes from Drive: " + e.getMessage());
         }
         updateSavedPageToken(savedPageToken);
-
-        Download.downloadFiles(changedFiles);
+        Download downloader = new Download();
+        downloader.downloadFiles(changedFiles);
     }
 
 }

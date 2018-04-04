@@ -10,7 +10,6 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -36,7 +35,7 @@ public class GDrive {
     /** Root file of the drive */
     private static File rootFile;
 
-    /** Flag for overwritting files */
+    /** Flag for overwriting files */
     private static boolean overwrite = false;
     /** Flag for verbose output */
     private static boolean verbose = false;
@@ -316,7 +315,8 @@ public class GDrive {
             }
 
             if (commandLine.hasOption("da")) {
-                Download.downloadAllFiles();
+                Download downloader = new Download();
+                downloader.downloadAllFiles();
             }
 
             //Download with file names
@@ -329,7 +329,8 @@ public class GDrive {
                                 .setFields("files(id, name, mimeType, md5Checksum, parents)").execute();
                         List<File> files = result.getFiles();
                         System.out.println("Downloading " + fileName + " files");
-                        Download.downloadFiles(files);
+                        Download downloader = new Download();
+                        downloader.downloadFiles(files);
                     } catch (IOException e) {
                         System.err.println("Could not get files with name " + fileName);
                     }
@@ -349,17 +350,20 @@ public class GDrive {
                         e.printStackTrace();
                     }
                 }
-                Download.downloadFiles(files);
+                Download downloader = new Download();
+                downloader.downloadFiles(files);
             }
 
             if (commandLine.hasOption("ua")) {
-                Upload.uploadAllFiles();
+                Upload uploader = new Upload();
+                uploader.uploadAllFiles();
             }
 
             //Download changes
             if (commandLine.hasOption("c")) {
                 //TODO: Add option for listing changes
-                Changes.changes();
+                Changes changes = new Changes();
+                changes.changes();
             }
 
             //Details using file names

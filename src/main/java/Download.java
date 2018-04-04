@@ -8,9 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 public class Download {
-    private static Map<String, String> exports = createExportMap();
+    //TODO: Keep a list of files that weren't able to be downloaded so it can be shown at the end
+    private Map<String, String> exports = createExportMap();
 
-    private static Map<String, String> createExportMap() {
+    private Map<String, String> createExportMap() {
         Map<String, String> exportMap = new HashMap<>();
         exportMap.put("application/vnd.google-apps.document", "application/pdf");
         exportMap.put("application/vnd.google-apps.spreadsheet", "text/csv");
@@ -18,11 +19,11 @@ public class Download {
         return exportMap;
     }
 
-    public static boolean isDirectory(File file) {
+    public boolean isDirectory(File file) {
         return file.getMimeType().equalsIgnoreCase("application/vnd.google-apps.folder");
     }
 
-    public static boolean isBinaryFile(File file) {
+    public boolean isBinaryFile(File file) {
         return file.getMd5Checksum() != null;
     }
 
@@ -30,7 +31,7 @@ public class Download {
     From a given file, will get the parent of that file, add the parent file
     to the front of the path, and will recurse until rootFile is hit
      */
-    private static String getPathRecursive(File file, String path) {
+    private String getPathRecursive(File file, String path) {
         File parent = Util.getParent(file);
         StringBuilder stringBuilder = new StringBuilder(path);
         if (!Util.isFileRootFile(parent)) {
@@ -42,16 +43,16 @@ public class Download {
         return stringBuilder.toString();
     }
 
-    private static void printFileDetails(File file) {
+    private void printFileDetails(File file) {
         System.out.printf("%s (%s) %s | Is folder: %s | Is binary: %s | checksum: %s |\n", file.getName(), file.getId(),
-                          file.getMimeType(), Download.isDirectory(file), Download.isBinaryFile(file), file.getMd5Checksum());
+                          file.getMimeType(), isDirectory(file), isBinaryFile(file), file.getMd5Checksum());
         System.out.println(file.getName() + " parent: " + file.getParents());
     }
 
     /*
     Downloads files in the given list of Files
      */
-    public static void downloadFiles(List<File> files) {
+    public void downloadFiles(List<File> files) {
         for (File file : files) {
             String path = "/";
 
@@ -87,7 +88,7 @@ public class Download {
         }
     }
 
-    private static void createLocalDirectories(String path) {
+    private void createLocalDirectories(String path) {
         //TODO: Maybe just replace the set GDrive directory string with UNIX slashes.
         /*
         Deal with GDrive directory being in the path as this can cause
@@ -111,9 +112,10 @@ public class Download {
         }
     }
 
-    private static void createLocalDirectory(String path) {
+    private void createLocalDirectory(String path) {
         java.io.File folderPath = new java.io.File(path);
         if (folderPath.exists()) {
+            //TODO: Use path seperators for slashes in the path
             System.out.println("Directory " + path + " exists");
         } else {
             if (!folderPath.mkdir()) {
@@ -127,7 +129,7 @@ public class Download {
     /*
     Downloads all files in the user's drive
      */
-    public static void downloadAllFiles() {
+    public void downloadAllFiles() {
         Drive service = GDrive.getDriveService();
         File rootFile;
         try {
@@ -140,7 +142,7 @@ public class Download {
         }
     }
 
-    private static void downloadRecursive(File file, String path) {
+    private void downloadRecursive(File file, String path) {
         //Path should be gdrive directory + parents directory + filename
         Drive service = GDrive.getDriveService();
         String query = String.format("'%s' in parents and (trashed = false)", file.getId());
@@ -162,7 +164,7 @@ public class Download {
     }
 
 
-    private static void downloadFile(File file, String path){
+    private void downloadFile(File file, String path){
         System.out.println();
 
         System.out.println("File: " + file.getName());
@@ -189,7 +191,7 @@ public class Download {
     Download a binary file from the user's drive with the id driveFileID,
     saving it to the given java.io.File
      */
-    private static void downloadBinaryFile(java.io.File file, String driveFileID) {
+    private void downloadBinaryFile(java.io.File file, String driveFileID) {
         try {
             OutputStream fileOutputStream = new FileOutputStream(file);
             Drive service = GDrive.getDriveService();
@@ -206,7 +208,7 @@ public class Download {
     /*
     Files like Google Documents need to be exported.
      */
-    private static void exportFile(File file, String path) throws IOException {
+    private void exportFile(File file, String path) throws IOException {
             System.out.println();
 
             System.out.println("Google file: " + file.getName());
@@ -242,7 +244,7 @@ public class Download {
 
     }
 
-    private static void downloadDirectory(File file, String path) {
+    private void downloadDirectory(File file, String path) {
         System.out.println();
 
         System.out.println("Directory: " + file.getName());

@@ -13,7 +13,7 @@ import static java.nio.file.Files.probeContentType;
     */
 public class Update {
 
-    public static FileList getFileListFromDrive(String fileName) {
+    public FileList getFileListFromDrive(String fileName) {
         Drive service = GDrive.getDriveService();
         String query = String.format("name = '%s'", fileName);
         FileList result = null;
@@ -30,7 +30,7 @@ public class Update {
     Updates the content of a drive file with ID driveFileID, from the content of the local file
     Uses ID since trying to match the file exactly is a huge pain
      */
-    public static void updateFile(String driveFileID, String localFileName) {
+    public void updateFile(String driveFileID, String localFileName) {
         Drive service = GDrive.getDriveService();
         String path = GDrive.getDrive_dir() + localFileName;
         java.io.File localFile = new java.io.File(path);
